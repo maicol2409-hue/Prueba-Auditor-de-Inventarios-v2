@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Prueba Auditor de Inventarios</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --card: #ffffff;
+      --accent: #22c55e;
+      --accent-soft: #bbf7d0;
+      --danger: #ef4444;
+      --text-main: #111827;
+      --text-soft: #6b7280;
+      --border-soft: #e5e7eb;
+      --shadow-soft: 0 20px 40px rgba(15, 23, 42, 0.08);
+      --radius-xl: 1.5rem;
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      margin: 0;
+      background: radial-gradient(circle at top, #e0f2fe 0, #f4f7fb 45%, #e5e7eb 100%);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .app-container {
+      background: var(--card);
+      border-radius: 2rem;
+      max-width: 900px;
+      width: 100%;
+      box-shadow: var(--shadow-soft);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    @media (min-width: 768px) {
+      .app-container {
+        padding: 32px 40px;
+      }
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .title-block h1 {
+      margin: 0;
+      font-size: 1.4rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+    }
+
+    .title-block p {
+      margin: 4px 0 0;
+      font-size: 0.9rem;
+      color: var(--text-soft);
+    }
+
+    .badge {
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border: 1px solid var(--border-soft);
+      color: var(--text-soft);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #f9fafb;
+    }
+
+    .badge-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--accent);
+    }
+
+    .progress-bar-wrapper {
+      width: 100%;
+      background: #e5e7eb;
+      border-radius: 999px;
+      overflow: hidden;
+      height: 8px;
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #22c55e, #16a34a);
+      transition: width 0.25s ease-out;
+    }
+
+    .card-main {
+      background: #f9fafb;
+      border-radius: var(--radius-xl);
+      padding: 20px;
+      display: grid;
+      grid-template-columns: 1.2fr 1.1fr;
+      gap: 16px;
+    }
+
+    @media (max-width: 768px) {
+      .card-main {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .question-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .pill-category {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.75rem;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: #e0f2fe;
+      color: #0369a1;
+      font-weight: 600;
+    }
+
+    .pill-category.soft {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .pill-category span.icon {
+      font-size: 0.9rem;
+    }
+
+    .question-text {
+      font-size: 1.05rem;
+      font-weight: 600;
+      line-height: 1.4;
+    }
+
+    .meta-info {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      font-size: 0.8rem;
+      color: var(--text-soft);
+    }
+
+    .meta-info span {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .options-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .option {
+      border-radius: 999px;
+      padding: 10px 14px;
+      background: #ffffff;
+      border: 1px solid var(--border-soft);
+      cursor: pointer;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: transform 0.1s ease, box-shadow 0.1s ease, border-color 0.15s ease, background 0.15s ease;
+    }
+
+    .option-index {
+      width: 22px;
+      height: 22px;
+      border-radius: 999px;
+      border: 1px solid var(--border-soft);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-soft);
+      background: #f9fafb;
+    }
+
+    .option:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 20px rgba(15, 23, 42, 0.05);
+    }
+
+    .option.selected {
+      border-color: #22c55e;
+      background: #ecfdf5;
+    }
+
+    .option.correct {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+
+    .option.incorrect {
+      border-color: var(--danger);
+      background: #fee2e2;
+    }
+
+    .side-panel {
+      border-radius: var(--radius-xl);
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .candidate-name {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border-soft);
+      font-size: 0.85rem;
+      outline: none;
+    }
+
+    .candidate-name:focus {
+      border-color: #22c55e;
+      box-shadow: 0 0 0 1px #bbf7d0;
+    }
+
+    .stats {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      font-size: 0.8rem;
+      color: var(--text-soft);
+    }
+
+    .stats-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .stats-pill {
+      font-size: 0.75rem;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: #f3f4f6;
+    }
+
+    .buttons-wrapper {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    button {
+      border: none;
+      border-radius: 999px;
+      padding: 9px 14px;
+      font-size: 0.85rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.15s ease;
+    }
+
+    button:active {
+      transform: translateY(1px);
+      box-shadow: none;
+    }
+
+    .btn-primary {
+      background: linear-gradient(90deg, #22c55e, #16a34a);
+      color: #fff;
+      box-shadow: 0 10px 20px rgba(34, 197, 94, 0.35);
+    }
+
+    .btn-secondary {
+      background: #f3f4f6;
+      color: #111827;
+    }
+
+    .btn-disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .feedback {
+      font-size: 0.85rem;
+      margin-top: 6px;
+      min-height: 20px;
+    }
+
+    .feedback.success {
+      color: #16a34a;
+    }
+
+    .feedback.error {
+      color: #b91c1c;
+    }
+
+    .result-card {
+      background: #f9fafb;
+      border-radius: var(--radius-xl);
+      padding: 20px;
+      display: none;
+      flex-direction: column;
+      gap: 14px;
+      border: 1px solid var(--border-soft);
+    }
+
+    .result-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .result-header h2 {
+      margin: 0;
+      font-size: 1.1rem;
+    }
+
+    .score-highlight {
+      font-size: 1.6rem;
+      font-weight: 800;
+    }
+
+    .score-badge {
+      font-size: 0.75rem;
+      padding: 3px 10px;
+      border-radius: 999px;
+      background: #ecfdf5;
+      color: #166534;
+      font-weight: 600;
+    }
+
+    .score-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      font-size: 0.85rem;
+    }
+
+    @media (max-width: 480px) {
+      .score-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .score-item {
+      background: #ffffff;
+      border-radius: 1rem;
+      padding: 8px 10px;
+      border: 1px solid #e5e7eb;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .score-item span.label {
+      color: var(--text-soft);
+      font-size: 0.75rem;
+    }
+
+    .score-item span.value {
+      font-weight: 600;
+    }
+
+    .result-textarea {
+      width: 100%;
+      min-height: 80px;
+      border-radius: 1rem;
+      border: 1px solid var(--border-soft);
+      padding: 10px;
+      font-size: 0.8rem;
+      resize: vertical;
+    }
+
+    .small-hint {
+      font-size: 0.75rem;
+      color: var(--text-soft);
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <div class="header">
+      <div class="title-block">
+        <h1>Prueba Auditor de Inventarios</h1>
+        <p>Evaluación técnica y de competencias conductuales para el puesto de Auditor de Inventarios.</p>
+      </div>
+      <span class="badge">
+        <span class="badge-dot"></span>
+        Modo práctica estructurada
+      </span>
+    </div>
+
+    <div class="progress-bar-wrapper">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <div class="card-main" id="quizCard">
+      <div class="question-wrapper">
+        <span class="pill-category" id="categoryPill">
+          <span class="icon">📊</span>
+          <span id="categoryLabel">Bloque técnico</span>
+        </span>
+
+        <div class="question-text" id="questionText">
+          Cargando pregunta...
+        </div>
+
+        <div class="meta-info">
+          <span><strong id="questionNumberLabel">Pregunta 1</strong> de <span id="totalQuestionsLabel">15</span></span>
+          <span>Tiempo estimado total: 15–20 minutos</span>
+        </div>
+
+        <div class="options-wrapper" id="optionsWrapper">
+          <!-- Opciones generadas por JS -->
+        </div>
+
+        <div class="feedback" id="feedbackArea"></div>
+      </div>
+
+      <div class="side-panel">
+        <div>
+          <label for="candidateName" style="font-size:0.8rem; font-weight:600;">Nombre del candidato</label>
+          <input
+            id="candidateName"
+            class="candidate-name"
+            type="text"
+            placeholder="Escriba el nombre y apellidos"
+          />
+          <p class="small-hint">
+            Este nombre aparecerá en el reporte final que podrá copiar y adjuntar al expediente.
+          </p>
+        </div>
+
+        <div class="stats">
+          <div class="stats-row">
+            <span>Puntaje técnico (parcial)</span>
+            <span class="stats-pill" id="techScorePartial">0 pts</span>
+          </div>
+          <div class="stats-row">
+            <span>Puntaje competencias (parcial)</span>
+            <span class="stats-pill" id="softScorePartial">0 pts</span>
+          </div>
+          <div class="stats-row">
+            <span>Progreso</span>
+            <span class="stats-pill" id="progressLabel">0 / 0</span>
+          </div>
+        </div>
+
+        <div class="buttons-wrapper">
+          <button id="checkButton" class="btn-primary">
+            Comprobar respuesta
+          </button>
+          <button id="nextButton" class="btn-secondary btn-disabled">
+            Siguiente
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="result-card" id="resultCard">
+      <div class="result-header">
+        <div>
+          <h2>Resultados de la prueba</h2>
+          <p class="small-hint" id="candidateSummary"></p>
+        </div>
+        <div>
+          <div class="score-highlight" id="totalScoreLabel">0</div>
+          <div class="score-badge" id="scoreBadge">En desarrollo</div>
+        </div>
+      </div>
+
+      <div class="score-grid">
+        <div class="score-item">
+          <span class="label">Bloque técnico</span>
+          <span class="value" id="techScoreLabel">0 / 60</span>
+        </div>
+        <div class="score-item">
+          <span class="label">Competencias conductuales</span>
+          <span class="value" id="softScoreLabel">0 / 40</span>
+        </div>
+        <div class="score-item">
+          <span class="label">Preguntas correctas</span>
+          <span class="value" id="questionsCorrectLabel">0 / 0</span>
+        </div>
+        <div class="score-item">
+          <span class="label">Nivel sugerido</span>
+          <span class="value" id="levelLabel">Por definir</span>
+        </div>
+      </div>
+
+      <div>
+        <label for="resultText" style="font-size:0.8rem; font-weight:600;">Resumen listo para copiar</label>
+        <textarea
+          id="resultText"
+          class="result-textarea"
+        ></textarea>
+        <p class="small-hint">
+          Puede copiar este texto y pegarlo en el correo al líder solicitante o en el expediente del candidato.
+        </p>
+      </div>
+
+      <div class="buttons-wrapper">
+        <button id="copyResultButton" class="btn-secondary">
+          Copiar resumen
+        </button>
+        <button id="restartButton" class="btn-primary">
+          Reiniciar prueba
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const questions = [
+      {
+        id: 1,
+        text: "Cuando realizas una auditoría física de inventarios en bodega, tu objetivo principal es:",
+        category: "tecnico",
+        options: [
+          "Verificar que el personal siga correctamente el uniforme.",
+          "Verificar que las existencias físicas coincidan con el ERP y kardex.",
+          "Revisar que la bodega tenga suficiente iluminación.",
+          "Evaluar la rotación del personal de bodega."
+        ],
+        correctIndex: 1
+      },
+      {
+        id: 2,
+        text: "Si el ERP (SAP/Softland) muestra 1.000 unidades y el conteo físico 980 unidades, lo correcto es:",
+        category: "tecnico",
+        options: [
+          "Ajustar inmediatamente el inventario al físico sin análisis.",
+          "Registrar la diferencia como pérdida y cerrar el mes.",
+          "Analizar la causa raíz y documentar hallazgos antes de solicitar ajuste.",
+          "Solicitar un nuevo conteo y, si se repite, cerrar el caso sin documentar."
+        ],
+        correctIndex: 2
+      },
+      {
+        id: 3,
+        text: "El concepto de 'cut-off' en inventarios se refiere a:",
+        category: "tecnico",
+        options: [
+          "El orden de colocación de productos en estantes.",
+          "Garantizar que las entradas y salidas de un periodo se registren en ese mismo periodo.",
+          "El método de depuración de productos obsoletos.",
+          "Un tipo de conteo cíclico."
+        ],
+        correctIndex: 1
+      },
+      {
+        id: 4,
+        text: "Un conteo cíclico es:",
+        category: "tecnico",
+        options: [
+          "Un conteo físico general que se hace solo una vez al año.",
+          "Un conteo físico parcial y recurrente de productos según criticidad o rotación.",
+          "Un conteo que realiza únicamente el auditor externo.",
+          "Un conteo que se hace solo cuando hay faltantes grandes."
+        ],
+        correctIndex: 1
+      },
+      {
+        id: 5,
+        text: "Al revisar obsolescencia de inventarios, ¿cuál indicador es más relevante?",
+        category: "tecnico",
+        options: [
+          "Edad del producto en días/meses sin rotación.",
+          "Color del empaque.",
+          "Número de proveedores que lo ofrecen.",
+          "Cantidad de personal en la bodega."
+        ],
+        correctIndex: 0
+      },
+      {
+        id: 6,
+        text: "En un proyecto de implementación de WMS, el rol del Auditor de Inventarios es principalmente:",
+        category: "tecnico",
+        options: [
+          "Diseñar la interfaz gráfica del sistema.",
+          "Definir la estrategia de marketing del WMS.",
+          "Aportar criterios de control interno, participar en pruebas de usuario y validar la información.",
+          "Capacitar únicamente al personal de ventas."
+        ],
+        correctIndex: 2
+      },
+      {
+        id: 7,
+        text: "¿Cuál de las siguientes situaciones representa mayor riesgo de control interno en inventarios?",
+        category: "tecnico",
+        options: [
+          "Documentar todos los ajustes con autorización de la Gerencia Financiera.",
+          "Registrar las tomas físicas con firma de los responsables.",
+          "Que la misma persona registre movimientos y apruebe ajustes de inventario.",
+          "Realizar conteos cíclicos programados mensualmente."
+        ],
+        correctIndex: 2
+      },
+      {
+        id: 8,
+        text: "Al trabajar con un operador logístico 3PL, el Auditor de Inventarios debe:",
+        category: "tecnico",
+        options: [
+          "Limitarse a aceptar los saldos que reporta el 3PL.",
+          "Verificar concordancia entre inventario del 3PL y el ERP, revisando controles y contratos.",
+          "No participar en tomas físicas.",
+          "Auditar solamente el inventario de la casa matriz."
+        ],
+        correctIndex: 1
+      },
+      {
+        id: 9,
+        text: "¿Qué reporte de Excel es más útil para analizar rotación de inventarios?",
+        category: "tecnico",
+        options: [
+          "Una tabla con saldo de inventario al cierre del mes.",
+          "Un gráfico de barras con el nombre de proveedores.",
+          "Un reporte con fechas de entrada/salida, saldo y días de inventario por SKU.",
+          "Una lista alfabética de productos."
+        ],
+        correctIndex: 2
+      },
+      {
+        id: 10,
+        text: "Durante una toma física en una sucursal, el encargado se muestra incómodo y presionado por el conteo. ¿Qué haces primero?",
+        category: "soft",
+        options: [
+          "Ignoras la actitud y continúas el conteo.",
+          "Le pides que se retire para no interferir.",
+          "Explicas el objetivo de la auditoría y refuerzas transparencia antes de continuar.",
+          "Lo amenazas con reportarlo a Recursos Humanos."
+        ],
+        correctIndex: 2
+      },
+      {
+        id: 11,
+        text: "Te piden ajustar un inventario para liberar producto para una venta urgente, sin evidencia documental. Tu respuesta más adecuada es:",
+        category: "soft",
+        options: [
+          "Aceptar para apoyar la meta comercial.",
+          "Solicitar soporte documental y explicar el riesgo de control; no ajustar sin evidencia.",
+          "Registrar el ajuste y anotar 'ajuste solicitado por Gerencia Comercial'.",
+          "Hacer el ajuste sin comentarlo a nadie."
+        ],
+        correctIndex: 1
+      },
+      {
+        id: 12,
+        text: "En un cierre mensual encuentras diferencias repetitivas de inventario en la misma bodega. ¿Cuál es tu enfoque?",
+        category: "soft",
+        options: [
+          "Ajustar las diferencias cada mes y seguir.",
+          "Proponer auditoría específica del proceso y plan de acción con seguimiento.",
+          "Solicitar traslado del personal de bodega.",
+          "No informar para evitar conflictos."
+        ],
+        correctIndex: 1
+      },
+      {
+        id: 13,
+        text: "Debes coordinar auditorías en varias sedes fuera del GAM, con tiempos ajustados. ¿Qué demuestras al organizar agenda, traslados y conteos?",
+        category: "soft",
+        options: [
+          "Solo orientación al detalle.",
+          "Capacidad de planificación, organización y disposición para trabajo de campo.",
+          "Interés en viajar únicamente.",
+          "Habilidad para delegar todo a otro departamento."
+        ],
+        correctIndex: 1
+      },
+      {
+        id: 14,
+        text: "Ante una discrepancia entre el informe de inventario del 3PL y SAP, la respuesta más profesional es:",
+        category: "soft",
+        options: [
+          "Aceptar el informe del 3PL porque 'son los expertos en bodega'.",
+          "Cuestionar públicamente al 3PL frente a la Gerencia.",
+          "Analizar la discrepancia, solicitar evidencia y documentar hallazgos antes del informe final.",
+          "Cerrar el caso para mantener buena relación."
+        ],
+        correctIndex: 2
+      },
+      {
+        id: 15,
+        text: "Un colaborador de bodega te confiesa que omiten registros en el sistema para acelerar la operación. ¿Qué haces?",
+        category: "soft",
+        options: [
+          "Le agradeces la confianza, pero no actúas.",
+          "Documentas, evalúas impacto, informas a jefatura y propones acciones correctivas.",
+          "Informas inmediatamente a todo el equipo delante de él.",
+          "Le pides que corrija a partir de ahora y olvidas el problema."
+        ],
+        correctIndex: 1
+      }
+    ];
+
+    const totalTechWeight = 60;
+    const totalSoftWeight = 40;
+
+    const totalQuestions = questions.length;
+    const techQuestionsCount = questions.filter(q => q.category === "tecnico").length;
+    const softQuestionsCount = questions.filter(q => q.category === "soft").length;
+
+    const progressBar = document.getElementById("progressBar");
+    const categoryPill = document.getElementById("categoryPill");
+    const categoryLabel = document.getElementById("categoryLabel");
+    const questionTextEl = document.getElementById("questionText");
+    const optionsWrapper = document.getElementById("optionsWrapper");
+    const questionNumberLabel = document.getElementById("questionNumberLabel");
+    const totalQuestionsLabel = document.getElementById("totalQuestionsLabel");
+    const feedbackArea = document.getElementById("feedbackArea");
+    const candidateNameInput = document.getElementById("candidateName");
+    const techScorePartial = document.getElementById("techScorePartial");
+    const softScorePartial = document.getElementById("softScorePartial");
+    const progressLabel = document.getElementById("progressLabel");
+    const checkButton = document.getElementById("checkButton");
+    const nextButton = document.getElementById("nextButton");
+    const quizCard = document.getElementById("quizCard");
+    const resultCard = document.getElementById("resultCard");
+
+    const totalScoreLabel = document.getElementById("totalScoreLabel");
+    const scoreBadge = document.getElementById("scoreBadge");
+    const techScoreLabel = document.getElementById("techScoreLabel");
+    const softScoreLabel = document.getElementById("softScoreLabel");
+    const questionsCorrectLabel = document.getElementById("questionsCorrectLabel");
+    const levelLabel = document.getElementById("levelLabel");
+    const candidateSummary = document.getElementById("candidateSummary");
+    const resultText = document.getElementById("resultText");
+    const copyResultButton = document.getElementById("copyResultButton");
+    const restartButton = document.getElementById("restartButton");
+
+    totalQuestionsLabel.textContent = totalQuestions;
+
+    let currentQuestionIndex = 0;
+    let selectedOptionIndex = null;
+    let answeredCurrent = false;
+    let techCorrect = 0;
+    let softCorrect = 0;
+
+    function updateProgressBar() {
+      const progress = (currentQuestionIndex / totalQuestions) * 100;
+      progressBar.style.width = progress + "%";
+      progressLabel.textContent = currentQuestionIndex + " / " + totalQuestions;
+    }
+
+    function renderQuestion() {
+      const q = questions[currentQuestionIndex];
+
+      selectedOptionIndex = null;
+      answeredCurrent = false;
+      feedbackArea.textContent = "";
+      feedbackArea.className = "feedback";
+      checkButton.classList.remove("btn-disabled");
+      nextButton.classList.add("btn-disabled");
+
+      if (q.category === "tecnico") {
+        categoryPill.classList.remove("soft");
+        categoryLabel.textContent = "Bloque técnico";
+        categoryPill.querySelector(".icon").textContent = "📊";
+      } else {
+        categoryPill.classList.add("soft");
+        categoryLabel.textContent = "Competencias conductuales";
+        categoryPill.querySelector(".icon").textContent = "🧠";
+      }
+
+      questionNumberLabel.textContent = "Pregunta " + (currentQuestionIndex + 1);
+      questionTextEl.textContent = q.text;
+
+      optionsWrapper.innerHTML = "";
+      q.options.forEach((optionText, index) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "option";
+        btn.dataset.index = index;
+
+        const spanIndex = document.createElement("span");
+        spanIndex.className = "option-index";
+        spanIndex.textContent = String.fromCharCode(65 + index);
+
+        const spanText = document.createElement("span");
+        spanText.textContent = optionText;
+
+        btn.appendChild(spanIndex);
+        btn.appendChild(spanText);
+
+        btn.addEventListener("click", () => {
+          if (answeredCurrent) return;
+          selectedOptionIndex = index;
+          Array.from(optionsWrapper.children).forEach(optionEl =>
+            optionEl.classList.remove("selected")
+          );
+          btn.classList.add("selected");
+        });
+
+        optionsWrapper.appendChild(btn);
+      });
+
+      updateProgressBar();
+      updatePartialScores();
+    }
+
+    function updatePartialScores() {
+      const techScore = (techCorrect / techQuestionsCount) * totalTechWeight;
+      const softScore = (softCorrect / softQuestionsCount) * totalSoftWeight;
+      techScorePartial.textContent = `${Math.round(techScore)} pts`;
+      softScorePartial.textContent = `${Math.round(softScore)} pts`;
+    }
+
+    function checkAnswer() {
+      if (answeredCurrent) return;
+      if (selectedOptionIndex === null) {
+        feedbackArea.textContent = "Por favor, seleccione una opción antes de continuar.";
+        feedbackArea.classList.add("error");
+        return;
+      }
+
+      const q = questions[currentQuestionIndex];
+      const optionButtons = Array.from(optionsWrapper.children);
+
+      optionButtons.forEach((btn, index) => {
+        btn.classList.remove("selected");
+        if (index === q.correctIndex) {
+          btn.classList.add("correct");
+        }
+      });
+
+      if (selectedOptionIndex === q.correctIndex) {
+        if (q.category === "tecnico") {
+          techCorrect++;
+        } else {
+          softCorrect++;
+        }
+        feedbackArea.textContent = "Respuesta correcta.";
+        feedbackArea.classList.add("success");
+      } else {
+        optionButtons[selectedOptionIndex].classList.add("incorrect");
+        feedbackArea.textContent = "Respuesta incorrecta.";
+        feedbackArea.classList.add("error");
+      }
+
+      answeredCurrent = true;
+      checkButton.classList.add("btn-disabled");
+      nextButton.classList.remove("btn-disabled");
+
+      updatePartialScores();
+    }
+
+    function goToNextQuestion() {
+      if (!answeredCurrent) return;
+
+      currentQuestionIndex++;
+
+      if (currentQuestionIndex >= totalQuestions) {
+        showResults();
+      } else {
+        renderQuestion();
+      }
+    }
+
+    function showResults() {
+      const techScore = (techCorrect / techQuestionsCount) * totalTechWeight || 0;
+      const softScore = (softCorrect / softQuestionsCount) * totalSoftWeight || 0;
+      const totalScore = Math.round(techScore + softScore);
+      const techScoreRounded = Math.round(techScore);
+      const softScoreRounded = Math.round(softScore);
+
+      totalScoreLabel.textContent = totalScore + " / 100";
+      techScoreLabel.textContent = `${techScoreRounded} / ${totalTechWeight}`;
+      softScoreLabel.textContent = `${softScoreRounded} / ${totalSoftWeight}`;
+      questionsCorrectLabel.textContent = `${techCorrect + softCorrect} / ${totalQuestions}`;
+
+      let nivel = "";
+      let badgeText = "";
+
+      if (totalScore >= 85) {
+        nivel = "Perfil altamente alineado";
+        badgeText = "Recomendado para avanzar en el proceso";
+      } else if (totalScore >= 70) {
+        nivel = "Perfil en desarrollo";
+        badgeText = "Recomendado con refuerzo técnico/competencial";
+      } else {
+        nivel = "Brecha significativa";
+        badgeText = "No recomendado en esta etapa";
+      }
+
+      levelLabel.textContent = nivel;
+      scoreBadge.textContent = badgeText;
+
+      const candidato =
+        candidateNameInput.value && candidateNameInput.value.trim().length > 0
+          ? candidateNameInput.value.trim()
+          : "Candidato sin nombre especificado";
+
+      const fecha = new Date();
+      const fechaStr = fecha.toLocaleString("es-CR", {
+        dateStyle: "short",
+        timeStyle: "short"
+      });
+
+      candidateSummary.textContent = `${candidato} · Fecha de aplicación: ${fechaStr}`;
+
+      const resumen = [
+        `Prueba Auditor de Inventarios - Resultado`,
+        `Candidato: ${candidato}`,
+        `Fecha y hora de aplicación: ${fechaStr}`,
+        ``,
+        `Puntaje total: ${totalScore} / 100`,
+        `Bloque técnico: ${techScoreRounded} / ${totalTechWeight}`,
+        `Competencias conductuales: ${softScoreRounded} / ${totalSoftWeight}`,
+        `Respuestas correctas: ${techCorrect + softCorrect} de ${totalQuestions}`,
+        `Nivel sugerido: ${nivel}`,
+        ``,
+        `Observación general: ${badgeText}.`
+      ].join("\n");
+
+      resultText.value = resumen;
+
+      quizCard.style.display = "none";
+      resultCard.style.display = "flex";
+      progressBar.style.width = "100%";
+      progressLabel.textContent = totalQuestions + " / " + totalQuestions;
+    }
+
+    function copyResultToClipboard() {
+      resultText.select();
+      document.execCommand("copy");
+      alert("Resumen copiado al portapapeles.");
+    }
+
+    function restartQuiz() {
+      currentQuestionIndex = 0;
+      selectedOptionIndex = null;
+      answeredCurrent = false;
+      techCorrect = 0;
+      softCorrect = 0;
+      feedbackArea.textContent = "";
+      feedbackArea.className = "feedback";
+      quizCard.style.display = "grid";
+      resultCard.style.display = "none";
+      renderQuestion();
+    }
+
+    checkButton.addEventListener("click", checkAnswer);
+    nextButton.addEventListener("click", goToNextQuestion);
+    copyResultButton.addEventListener("click", copyResultToClipboard);
+    restartButton.addEventListener("click", restartQuiz);
+
+    renderQuestion();
+  </script>
+</body>
+</html>
